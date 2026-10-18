@@ -1,6 +1,7 @@
 #pragma once
-#define CFG_TUSB_MCU OPT_MCU_RP2040
-#define CFG_TUSB_OS OPT_OS_NONE
+// The Pico SDK defines CFG_TUSB_MCU and CFG_TUSB_OS in compiler flags.
+// Configure TinyUSB as a full-speed USB device on the RP2040's port 0.
+#define CFG_TUSB_RHPORT0_MODE (OPT_MODE_DEVICE | OPT_MODE_FULL_SPEED)
 #define CFG_TUD_ENABLED 1
 #define CFG_TUD_ENDPOINT0_SIZE 64
 #define CFG_TUD_HID 1
