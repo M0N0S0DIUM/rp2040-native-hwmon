@@ -36,7 +36,7 @@ jobs:
           grep -q 'STM32F411xE' "$board"
           # This board has a 25 MHz HSE crystal. TinyUSB 0.18.0 defaults to 8 MHz.
           # Exact remedy is upstream TinyUSB PR #3524: define HSE_VALUE for board target.
-          sed -i '/^[[:space:]]*STM32F411xE$/a\\    HSE_VALUE=25000000' "$board"
+          sed -i '/^[[:space:]]*STM32F411xE$/a\    HSE_VALUE=25000000' "$board"
           grep -q 'HSE_VALUE=25000000' "$board"
           cat "$board"
       - name: Build stock USB diagnostic
