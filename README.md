@@ -33,11 +33,11 @@ GitHub Actions runs automatically on `main` changes and can also be launched via
 Local build (with `PICO_SDK_PATH` and toolchain already installed):
 
 ```sh
-cmake -S . -B build -G Ninja -DPICO_BOARD=pico
+cmake -S . -B build -G Ninja -DPICO_BOARD=waveshare_rp2040_zero
 cmake --build build
 ```
 
-Using `PICO_BOARD=pico` is intentional: both target the RP2040, and this project only needs ADC and USB, not Waveshare-specific board features.
+Build target is deliberately `waveshare_rp2040_zero` rather than the generic Pico: the Waveshare definition uses its board-specific flash SPI divider. The generic Pico build was observed to return to the RP2040 boot drive on the user's board; hardware verification of the revised build is still pending.
 
 ## Linux verification (Arch)
 
