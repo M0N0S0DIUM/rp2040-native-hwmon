@@ -40,7 +40,7 @@ jobs:
       - name: Configure
         env:
           PICO_SDK_PATH: ${{ runner.temp }}/pico-sdk
-        run: cmake -S . -B build -G Ninja -DPICO_BOARD=pico -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -G Ninja -DPICO_BOARD=waveshare_rp2040_zero -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build --parallel 2
