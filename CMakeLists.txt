@@ -9,3 +9,10 @@ add_executable(rp2040_native_hwmon main.c usb_descriptors.c)
 target_include_directories(rp2040_native_hwmon PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_link_libraries(rp2040_native_hwmon pico_stdlib hardware_adc tinyusb_device tinyusb_board m)
 pico_add_extra_outputs(rp2040_native_hwmon)
+
+# Independent, stock Pico SDK USB CDC boot diagnostic, no HID emulation.
+add_executable(rp2040_usb_diag diagnostic/usb_diag.c)
+target_link_libraries(rp2040_usb_diag pico_stdlib pico_stdio_usb)
+pico_enable_stdio_usb(rp2040_usb_diag 1)
+pico_enable_stdio_uart(rp2040_usb_diag 0)
+pico_add_extra_outputs(rp2040_usb_diag)

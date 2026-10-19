@@ -65,3 +65,16 @@ If the device is detected, confirm that temp1 follows the water sensor and temp2
 - This project does **not** implement direct PWM/RPM fan control, and is **not** Aqua Computer-compatible in every respect.
 
 Source of compatibility offsets: [Linux kernel `aquacomputer_d5next.c`](https://github.com/torvalds/linux/blob/master/drivers/hwmon/aquacomputer_d5next.c) (Farbwerk temperatures start at report offset `0x2f`, two bytes each, big endian; report ID `1`).
+
+## Boot troubleshooting: minimal USB diagnostic firmware
+
+If `RPI-RP2` reappears after flashing the sensor firmware, first try the **independent diagnostic**, not repeated sensor-firmware reflashes.
+
+1. In the successful GitHub Actions run download the artifact **rp2040-zero-usb-diag-uf2**, extract `rp2040_usb_diag.uf2`.
+2. Unplug USB, hold BOOT to enter `RPI-RP2`, then release BOOT and copy **only** the extracted UF2 to the drive.
+3. The volume should unmount. Unplug and replug the board **without touching BOOT**.
+4. Run `lsusb | grep -Ei '2e8a|raspberry|pico|rp2'` and `ls -l /dev/ttyACM*` on Linux.
+5. If the diag appears as a Pico USB serial device, the flash/boot process works; troubleshoot the main app separately. USB CDC can be inspected with `picocom`, `minicom`, or a terminal, but no serial service is needed for actual temperature firmware.
+6. If it still appears as `2e8a:0003` / `RPI-RP2`, test with all sensor wires disconnected and inspect the BOOT button for a stuck switch or solder bridge. Other possibilities: failing/nonresponsive SPI flash, incorrect/incomplete UF2 write, insufficient USB power, or board damage.
+
+The diagnostic build is **not** a temperature sensor and is not intended for fan control. Firmware CI checks RP2040 UF2 structure plus the ROM's actual boot2 checksum before uploading artifacts.
