@@ -37,7 +37,7 @@ def check(path: Path) -> None:
     )
     assert actual == stored, f"RP2040 boot2 checksum incorrect: {stored:#x} != {actual:#x}"
     stack, reset = struct.unpack_from("<II", image, 256)
-    assert 0x20000000 <= stack < 0x20042000, f"Unexpected stack pointer: {stack:#x}"
+    assert 0x20000000 <= stack <= 0x20042000, f"Unexpected stack pointer: {stack:#x}"
     assert 0x10000100 <= (reset & ~1) < 0x10100000 and reset & 1, f"Bad reset handler: {reset:#x}"
     print(f"PASS {path}: {total} UF2 blocks, correct RP2040 boot2 CRC {actual:#x}, "
           f"reset {reset:#x}, {len(image)} flash bytes")
