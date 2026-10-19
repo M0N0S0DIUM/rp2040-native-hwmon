@@ -1,0 +1,65 @@
+name: STM32F411 Black Pill firmware
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "blackpill-f411/**"
+      - ".github/workflows/blackpill-f411.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate layouts and build inputs
+        run: python3 -m unittest discover -s blackpill-f411/tests -v
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi cmake ninja-build python3
+      - name: Clone TinyUSB 0.18.0 with STM32 HAL submodules
+        run: |
+          git clone --depth 1 --branch 0.18.0 --recurse-submodules \
+            https://github.com/hathach/tinyusb.git "$RUNNER_TEMP/tinyusb"
+      - name: Build stock USB diagnostic
+        run: |
+          cmake -S "$RUNNER_TEMP/tinyusb/examples/device/cdc_msc" -B build/diag \
+            -G Ninja -DBOARD=stm32f411blackpill -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/diag --parallel 2
+          mkdir -p dist
+          artifact="$(find build/diag -maxdepth 1 -type f -name '*.bin' | head -n 1)"
+          test -n "$artifact"
+          cp "$artifact" dist/blackpill_f411_usb_diagnostic.bin
+          file dist/blackpill_f411_usb_diagnostic.bin
+      - name: Install experimental temperature monitor in TinyUSB examples
+        run: |
+          cp -r blackpill-f411/hid "$RUNNER_TEMP/tinyusb/examples/device/odderon_blackpill_hid"
+      - name: Build native HID temperature firmware
+        run: |
+          cmake -S "$RUNNER_TEMP/tinyusb/examples/device/odderon_blackpill_hid" -B build/hid \
+            -G Ninja -DBOARD=stm32f411blackpill -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/hid --parallel 2
+          artifact="$(find build/hid -maxdepth 1 -type f -name '*.bin' | head -n 1)"
+          test -n "$artifact"
+          cp "$artifact" dist/blackpill_f411_hwmon.bin
+          file dist/blackpill_f411_hwmon.bin
+      - name: Verify binary image and STM32 vector table
+        run: python3 blackpill-f411/tools/check_stm32_bin.py dist/*.bin
+      - name: Upload safe USB diagnostic (test this first)
+        uses: actions/upload-artifact@v4
+        with:
+          name: blackpill-f411-usb-diagnostic
+          path: dist/blackpill_f411_usb_diagnostic.bin
+          if-no-files-found: error
+      - name: Upload experimental native HID monitor
+        uses: actions/upload-artifact@v4
+        with:
+          name: blackpill-f411-native-hwmon
+          path: dist/blackpill_f411_hwmon.bin
+          if-no-files-found: error
