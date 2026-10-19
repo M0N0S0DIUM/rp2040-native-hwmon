@@ -25,8 +25,11 @@ jobs:
           sudo apt-get install -y gcc-arm-none-eabi libnewlib-arm-none-eabi cmake ninja-build python3
       - name: Clone TinyUSB 0.18.0 with STM32 HAL submodules
         run: |
-          git clone --depth 1 --branch 0.18.0 --recurse-submodules \
+          git clone --depth 1 --branch 0.18.0 \
             https://github.com/hathach/tinyusb.git "$RUNNER_TEMP/tinyusb"
+          # This TinyUSB release downloads MCU dependencies separately (not git submodules).
+          python3 "$RUNNER_TEMP/tinyusb/tools/get_deps.py" stm32f4
+          test -f "$RUNNER_TEMP/tinyusb/hw/mcu/st/cmsis_device_f4/Source/Templates/system_stm32f4xx.c"
       - name: Build stock USB diagnostic
         run: |
           cmake -S "$RUNNER_TEMP/tinyusb/examples/device/cdc_msc" -B build/diag \
