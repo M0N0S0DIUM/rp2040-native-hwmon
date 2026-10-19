@@ -59,8 +59,8 @@ jobs:
           cmake --build build/hid --parallel 2
           artifact="$(find build/hid -maxdepth 1 -type f -name '*.bin' | head -n 1)"
           test -n "$artifact"
-          cp "$artifact" dist/blackpill_f411_hwmon_25mhz.bin
-          file dist/blackpill_f411_hwmon_25mhz.bin
+          cp "$artifact" dist/blackpill_f411_hwmon_4ch_25mhz.bin
+          file dist/blackpill_f411_hwmon_4ch_25mhz.bin
       - name: Assert 25 MHz HSE macro was compiled into both firmware targets
         run: |
           grep -q 'HSE_VALUE=25000000' build/diag/build.ninja
@@ -76,6 +76,6 @@ jobs:
       - name: Upload experimental native HID monitor
         uses: actions/upload-artifact@v4
         with:
-          name: blackpill-f411-native-hwmon-25mhz
-          path: dist/blackpill_f411_hwmon_25mhz.bin
+          name: blackpill-f411-native-hwmon-4ch-25mhz
+          path: dist/blackpill_f411_hwmon_4ch_25mhz.bin
           if-no-files-found: error
