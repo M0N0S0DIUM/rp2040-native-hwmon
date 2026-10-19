@@ -30,6 +30,15 @@ jobs:
           # This TinyUSB release downloads MCU dependencies separately (not git submodules).
           python3 "$RUNNER_TEMP/tinyusb/tools/get_deps.py" stm32f4
           test -f "$RUNNER_TEMP/tinyusb/hw/mcu/st/cmsis_device_f4/Source/Templates/system_stm32f4xx.c"
+      - name: Apply upstream Black Pill 25 MHz HSE fix (TinyUSB issue 3516)
+        run: |
+          board="$RUNNER_TEMP/tinyusb/hw/bsp/stm32f4/boards/stm32f411blackpill/board.cmake"
+          grep -q 'STM32F411xE' "$board"
+          # This board has a 25 MHz HSE crystal. TinyUSB 0.18.0 defaults to 8 MHz.
+          # Exact remedy is upstream TinyUSB PR #3524: define HSE_VALUE for board target.
+          sed -i '/^[[:space:]]*STM32F411xE$/a\\    HSE_VALUE=25000000' "$board"
+          grep -q 'HSE_VALUE=25000000' "$board"
+          cat "$board"
       - name: Build stock USB diagnostic
         run: |
           cmake -S "$RUNNER_TEMP/tinyusb/examples/device/cdc_msc" -B build/diag \
@@ -38,8 +47,8 @@ jobs:
           mkdir -p dist
           artifact="$(find build/diag -maxdepth 1 -type f -name '*.bin' | head -n 1)"
           test -n "$artifact"
-          cp "$artifact" dist/blackpill_f411_usb_diagnostic.bin
-          file dist/blackpill_f411_usb_diagnostic.bin
+          cp "$artifact" dist/blackpill_f411_usb_diagnostic_25mhz.bin
+          file dist/blackpill_f411_usb_diagnostic_25mhz.bin
       - name: Install experimental temperature monitor in TinyUSB examples
         run: |
           cp -r blackpill-f411/hid "$RUNNER_TEMP/tinyusb/examples/device/odderon_blackpill_hid"
@@ -50,19 +59,23 @@ jobs:
           cmake --build build/hid --parallel 2
           artifact="$(find build/hid -maxdepth 1 -type f -name '*.bin' | head -n 1)"
           test -n "$artifact"
-          cp "$artifact" dist/blackpill_f411_hwmon.bin
-          file dist/blackpill_f411_hwmon.bin
+          cp "$artifact" dist/blackpill_f411_hwmon_25mhz.bin
+          file dist/blackpill_f411_hwmon_25mhz.bin
+      - name: Assert 25 MHz HSE macro was compiled into both firmware targets
+        run: |
+          grep -q 'HSE_VALUE=25000000' build/diag/build.ninja
+          grep -q 'HSE_VALUE=25000000' build/hid/build.ninja
       - name: Verify binary image and STM32 vector table
         run: python3 blackpill-f411/tools/check_stm32_bin.py dist/*.bin
       - name: Upload safe USB diagnostic (test this first)
         uses: actions/upload-artifact@v4
         with:
-          name: blackpill-f411-usb-diagnostic
-          path: dist/blackpill_f411_usb_diagnostic.bin
+          name: blackpill-f411-usb-diagnostic-25mhz
+          path: dist/blackpill_f411_usb_diagnostic_25mhz.bin
           if-no-files-found: error
       - name: Upload experimental native HID monitor
         uses: actions/upload-artifact@v4
         with:
-          name: blackpill-f411-native-hwmon
-          path: dist/blackpill_f411_hwmon.bin
+          name: blackpill-f411-native-hwmon-25mhz
+          path: dist/blackpill_f411_hwmon_25mhz.bin
           if-no-files-found: error
